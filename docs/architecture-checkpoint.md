@@ -27,8 +27,8 @@ SourceRecord
 | 4 | Opportunity compiler | completed | audited TradeHypothesis and Deal Cell create command |
 | 5 | Deal Cell and route experiments | completed | durable deal/route state, experiments, actions, observations and budget ledger |
 | 6 | TradeAlpha and portfolio | completed | temporal scores, distributions, valuations and constrained allocations |
-| 7 | Bilateral commercial execution | next | RFQ, quotes, interactions and terms |
-| 8 | Financial risk, compliance and approvals | pending | costs, policy decisions and approvals |
+| 7 | Bilateral commercial execution | completed | governed RFQs, quotes, interactions, qualification and terms |
+| 8 | Financial risk, compliance and approvals | next | costs, policy decisions and approvals |
 | 9 | Orders, cash and learning | pending | execution ledger and Outcomes |
 
 ## Non-negotiable invariants
@@ -47,18 +47,23 @@ SourceRecord
     probability, stage or history. Spend is append-only and every limit change names an approver.
 12. TradeAlpha is advisory and append-only. Hard compliance/risk constraints remain independent of
     score, small data keeps wide intervals, and no Outcome means a rule baseline rather than learning.
+13. Board-seven commercial records are facts or drafts, never policy authority. Live outbound is
+    disabled until board eight supplies current policy, approval, freeze checks and production tokens.
 
-## Board-six handoff boundary
+## Board-seven handoff boundary
 
-Board six consumes append-only Deal Route, Experiment, Action, Observation and spend history. It owns
-versioned feature snapshots, scores, probability/cashflow distributions, route/action valuations,
-risk-limit versions, portfolio assessments/allocations, backtests, calibration, model governance and
-controlled exploration. It never mutates board-five records or turns a recommendation into execution.
+Board seven consumes canonical Entity/Product/Claim references, Deal Routes and approved advisory
+inputs. It owns supplier/buyer commercial profiles, RFQ versions, supplier quote facts and comparison
+snapshots, contact points and suppressions, grounded message drafts, send audit records, interactions,
+qualifications, constraint assessments, buyer quote drafts, negotiation versions and meeting action
+proposals. It never copies canonical company identity, changes a Route stage, calculates authoritative
+landed cost, decides compliance or creates orders/accounting truth.
 
-Board seven may consume selected Route/Action recommendations to prepare RFQs, quotes, interactions
-and negotiation artifacts. It must retain the recommendation version and still pass board-five
-execution plus board-eight policy/approval boundaries. Board-six hard limits are not policy approval;
-board-nine Outcomes and financial ledgers remain the only learning/accounting truth.
+Board eight must implement deterministic Money/FX/cost scenarios and the current policy, approval,
+execution-token and freeze authority behind the existing ports. Board seven's default ports deny
+communication and reject buyer-quote construction; its default gateway cannot deliver live messages.
+The local token and recording gateway are acceptance scaffolding, not production authorization.
+Board nine remains the authority for orders, payments, P&L and learning Outcomes.
 
 ## Start-of-board review
 

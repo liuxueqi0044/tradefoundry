@@ -26,6 +26,7 @@ def get_session() -> Generator[Session, None, None]:
 
 
 def create_all(database_engine=None) -> None:
+    from tradefoundry.bilateral import models as bilateral_models  # noqa: F401
     from tradefoundry.deals import models as deal_models  # noqa: F401
     from tradefoundry.evidence import models as evidence_models  # noqa: F401
     from tradefoundry.ingestion import models  # noqa: F401

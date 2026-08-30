@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
+from tradefoundry.bilateral.api import router as bilateral_router
 from tradefoundry.config import get_settings
 from tradefoundry.db import get_session
 from tradefoundry.deals.api import router as deals_router
@@ -43,6 +44,7 @@ app.include_router(master_router)
 app.include_router(opportunity_router)
 app.include_router(deals_router)
 app.include_router(tradealpha_router)
+app.include_router(bilateral_router)
 
 
 def _artifact_store() -> FileSystemArtifactStore:

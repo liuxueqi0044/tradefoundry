@@ -1,6 +1,7 @@
 # TradeFoundry
 
-TradeFoundry is an evidence-first operating system for discovering and executing global trade opportunities. The repository currently contains six completed modular-monolith boards:
+TradeFoundry is an evidence-first operating system for discovering and executing global trade
+opportunities. The repository currently contains seven completed modular-monolith boards:
 
 1. **Global sensors and source governance**
 2. **Evidence vault and document intelligence**
@@ -8,6 +9,7 @@ TradeFoundry is an evidence-first operating system for discovering and executing
 4. **Opportunity compiler**
 5. **Deal Cell and route experiments**
 6. **TradeAlpha and portfolio decision support**
+7. **Governed buyer/supplier bilateral execution**
 
 ## Implemented scope
 
@@ -41,6 +43,12 @@ TradeFoundry is an evidence-first operating system for discovering and executing
 | S6.1–S6.3 | Temporal feature registry, deterministic scoring and conditional probability chain | `tradealpha/features.py`, `scoring.py`, `probability.py` |
 | S6.4–S6.9 | Cashflow/route/action valuation, portfolio limits, constrained allocation and explanation | `tradealpha/valuation.py`, `risk.py`, `allocation.py`, `explanation.py` |
 | S6.10–S6.13 | Leakage-safe replay, calibration, model registry and capped exploration | `tradealpha/analytics.py`, `registry.py`, `exploration.py` |
+| S7.1–S7.2 | Evidence-backed supplier profiles, capabilities, discovery pool and governed whitelist | `bilateral/suppliers.py` |
+| S7.3–S7.4 | Versioned Chinese RFQs, explicit gaps, final-version pinning and one-time approved sending | `bilateral/rfq.py`, `outbound.py` |
+| S7.5–S7.7 | Email/CSV/manual quote adapters, structured intake, explicit comparability and product-level performance | `bilateral/quote_parsing.py`, `quotes.py`, `suppliers.py` |
+| S7.8–S7.11 | Evidence-backed buyer/contact CRM, suppression-first eligibility, grounded drafts and first-contact approval | `bilateral/crm.py`, `messaging.py`, `outbound.py` |
+| S7.12–S7.14 | Raw-preserving interaction intake, conservative thread linking, intent review and six-part qualification | `bilateral/messaging.py` |
+| S7.15–S7.18 | Bilateral constraint matrix, Board-8 cost seam, immutable negotiation terms and meeting action proposals | `bilateral/coordination.py` |
 
 ## Quick start
 
@@ -101,11 +109,31 @@ uv run ruff check .
 uv run pytest
 ```
 
-Tests are organized by the S1.1–S1.9, S2.1–S2.10, S3.1–S3.9, S4.1–S4.9, S5.1–S5.11 and S6.1–S6.13 acceptance identifiers. They use deterministic fixtures, mock HTTP transports and contract-level model fixtures; no live website, buyer, supplier, communication channel or external model is contacted during validation.
+Tests are organized by the S1.1–S1.9, S2.1–S2.10, S3.1–S3.9, S4.1–S4.9,
+S5.1–S5.11, S6.1–S6.13 and S7.1–S7.18 acceptance identifiers. They use deterministic
+fixtures, mock HTTP transports, an in-memory outbound gateway and contract-level model fixtures; no
+live website, buyer, supplier, communication channel, financial service or external model is
+contacted during validation.
 
 ## Boundary with later boards
 
-Board one emits immutable raw artifacts, versioned source records, quarantine items, change events and quality assessments. Board two turns authorized artifacts into versioned, cited Claims. Board three resolves those Claims into reversible canonical entities, products, specifications and relations. Board four compiles verified events into audited hypotheses and versioned Deal Cell creation commands. Board five turns only a passing command into durable Deal Cell/Route experiments, actions, observations and budget ledgers. Board six adds append-only shadow scores, probability/cashflow distributions, valuations and constrained portfolio recommendations. It does not execute actions, approve policy, provide a live buyer/supplier channel or create accounting truth. Those remain boards seven through nine.
+Board one emits immutable raw artifacts, versioned source records, quarantine items, change events and
+quality assessments. Board two turns authorized artifacts into versioned, cited Claims. Board three
+resolves those Claims into reversible canonical entities, products, specifications and relations.
+Board four compiles verified events into audited hypotheses and versioned Deal Cell creation
+commands. Board five turns only a passing command into durable Deal Cell/Route experiments, actions,
+observations and budget ledgers. Board six adds append-only shadow scores, distributions, valuations
+and constrained portfolio recommendations. Board seven prepares and records governed bilateral
+commercial artifacts, but defaults to no live outbound delivery. Deterministic landed cost, current
+policy authority, compliance freezes and production execution tokens remain board eight; orders,
+cash and accounting truth remain board nine.
 
 Before starting another board, review the short [architecture checkpoint](docs/architecture-checkpoint.md).
-See [ADR-0001](docs/adr/0001-ingestion-architecture.md), [ADR-0002](docs/adr/0002-evidence-and-claims.md), [ADR-0003](docs/adr/0003-commercial-world-model.md), [ADR-0004](docs/adr/0004-opportunity-compiler.md), [ADR-0005](docs/adr/0005-deal-execution-kernel.md), [ADR-0006](docs/adr/0006-tradealpha-decision-engine.md), and the board six [operations runbook](docs/runbooks/board-6-operations.md).
+See [ADR-0001](docs/adr/0001-ingestion-architecture.md),
+[ADR-0002](docs/adr/0002-evidence-and-claims.md),
+[ADR-0003](docs/adr/0003-commercial-world-model.md),
+[ADR-0004](docs/adr/0004-opportunity-compiler.md),
+[ADR-0005](docs/adr/0005-deal-execution-kernel.md),
+[ADR-0006](docs/adr/0006-tradealpha-decision-engine.md),
+[ADR-0007](docs/adr/0007-governed-bilateral-execution.md), and the board seven
+[operations runbook](docs/runbooks/board-7-operations.md).
