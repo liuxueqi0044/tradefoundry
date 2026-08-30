@@ -1,0 +1,427 @@
+"""add deal execution board
+
+Revision ID: 8be19a6c3d21
+Revises: 744f12c4d0b5
+Create Date: 2026-08-30 05:30:00
+"""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+
+from alembic import op
+
+revision: str = "8be19a6c3d21"
+down_revision: str | Sequence[str] | None = "744f12c4d0b5"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
+
+MONEY = sa.Numeric(precision=19, scale=4)
+
+
+def upgrade() -> None:
+    op.create_table(
+        "deals_budget_adjustments",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("scope_type", sa.String(length=30), nullable=False),
+        sa.Column("scope_id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("previous_limit", MONEY, nullable=False),
+        sa.Column("new_limit", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("approver", sa.String(length=200), nullable=False),
+        sa.Column("reason", sa.Text(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_workflow_jobs",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("job_type", sa.String(length=80), nullable=False),
+        sa.Column("payload_json", sa.JSON(), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("attempts", sa.Integer(), nullable=False),
+        sa.Column("max_attempts", sa.Integer(), nullable=False),
+        sa.Column("available_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("lease_token", sa.String(length=100), nullable=True),
+        sa.Column("lease_expires_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("wait_reason", sa.Text(), nullable=True),
+        sa.Column("last_error", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_workflow_signals",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("job_id", sa.String(length=36), nullable=False),
+        sa.Column("signal_key", sa.String(length=100), nullable=False),
+        sa.Column("payload_json", sa.JSON(), nullable=False),
+        sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["job_id"], ["deals_workflow_jobs.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("job_id", "signal_key"),
+    )
+    op.create_table(
+        "deals_cells",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("cell_key", sa.String(length=200), nullable=False),
+        sa.Column("issuance_command_id", sa.String(length=36), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("hypothesis_id", sa.String(length=36), nullable=False),
+        sa.Column("owner", sa.String(length=200), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("budget_limit", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("boundaries_json", sa.JSON(), nullable=False),
+        sa.Column("command_snapshot_json", sa.JSON(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["hypothesis_id"], ["opportunity_trade_hypotheses.id"], ondelete="RESTRICT"
+        ),
+        sa.ForeignKeyConstraint(
+            ["issuance_command_id"],
+            ["opportunity_deal_cell_issuance_commands.id"],
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_routes",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("cell_id", sa.String(length=36), nullable=False),
+        sa.Column("route_key", sa.String(length=200), nullable=False),
+        sa.Column("source_route_candidate_id", sa.String(length=36), nullable=True),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("route_type", sa.String(length=60), nullable=False),
+        sa.Column("roles_json", sa.JSON(), nullable=False),
+        sa.Column("stage", sa.String(length=30), nullable=False),
+        sa.Column("lifecycle_status", sa.String(length=30), nullable=False),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("budget_limit", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("parent_route_id", sa.String(length=36), nullable=True),
+        sa.Column("merged_into_route_id", sa.String(length=36), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["cell_id"], ["deals_cells.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["merged_into_route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["parent_route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(
+            ["source_route_candidate_id"],
+            ["opportunity_route_candidates.id"],
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("cell_id", "route_key"),
+    )
+    op.create_table(
+        "deals_experiments",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("experiment_key", sa.String(length=160), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("question", sa.Text(), nullable=False),
+        sa.Column("hypothesis", sa.Text(), nullable=False),
+        sa.Column("metric_name", sa.String(length=200), nullable=False),
+        sa.Column("budget_limit", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("deadline", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("on_expiry", sa.String(length=30), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("success_condition_json", sa.JSON(), nullable=False),
+        sa.Column("failure_condition_json", sa.JSON(), nullable=False),
+        sa.Column("inconclusive_condition_json", sa.JSON(), nullable=False),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("route_id", "experiment_key"),
+    )
+    op.create_table(
+        "deals_route_lifecycle_events",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("action", sa.String(length=30), nullable=False),
+        sa.Column("previous_status", sa.String(length=30), nullable=False),
+        sa.Column("new_status", sa.String(length=30), nullable=False),
+        sa.Column("related_route_id", sa.String(length=36), nullable=True),
+        sa.Column("actor", sa.String(length=200), nullable=False),
+        sa.Column("reason", sa.Text(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["related_route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_stage_transitions",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("from_stage", sa.String(length=30), nullable=False),
+        sa.Column("to_stage", sa.String(length=30), nullable=False),
+        sa.Column("expected_version", sa.Integer(), nullable=False),
+        sa.Column("outcome", sa.String(length=30), nullable=False),
+        sa.Column("reasons_json", sa.JSON(), nullable=False),
+        sa.Column("evidence_snapshot_json", sa.JSON(), nullable=False),
+        sa.Column("actor", sa.String(length=200), nullable=False),
+        sa.Column("reason", sa.Text(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_actions",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("experiment_id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("action_key", sa.String(length=160), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("action_type", sa.String(length=80), nullable=False),
+        sa.Column("description", sa.Text(), nullable=False),
+        sa.Column("external_side_effect", sa.Boolean(), nullable=False),
+        sa.Column("estimated_cost", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("policy_decision_ref", sa.String(length=200), nullable=True),
+        sa.Column("policy_status", sa.String(length=30), nullable=False),
+        sa.Column("payload_json", sa.JSON(), nullable=False),
+        sa.Column("dependency_action_ids_json", sa.JSON(), nullable=False),
+        sa.Column("due_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("sla_seconds", sa.Integer(), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("external_effect_key", sa.String(length=200), nullable=True),
+        sa.Column("version", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["experiment_id"], ["deals_experiments.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("experiment_id", "action_key"),
+        sa.UniqueConstraint("external_effect_key"),
+    )
+    op.create_table(
+        "deals_experiment_outcomes",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("experiment_id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("outcome", sa.String(length=30), nullable=False),
+        sa.Column("observation_ids_json", sa.JSON(), nullable=False),
+        sa.Column("actor", sa.String(length=200), nullable=False),
+        sa.Column("reason", sa.Text(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["experiment_id"], ["deals_experiments.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_action_attempts",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("action_id", sa.String(length=36), nullable=False),
+        sa.Column("attempt_no", sa.Integer(), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("executor_name", sa.String(length=100), nullable=False),
+        sa.Column("error_type", sa.String(length=100), nullable=True),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("external_receipt_json", sa.JSON(), nullable=True),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["action_id"], ["deals_actions.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("action_id", "attempt_no"),
+    )
+    op.create_table(
+        "deals_budget_decisions",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("action_id", sa.String(length=36), nullable=False),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("decision", sa.String(length=20), nullable=False),
+        sa.Column("requested_amount", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("remaining_snapshot_json", sa.JSON(), nullable=False),
+        sa.Column("reasons_json", sa.JSON(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["action_id"], ["deals_actions.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_budget_reservations",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("action_id", sa.String(length=36), nullable=False),
+        sa.Column("amount", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("status", sa.String(length=30), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["action_id"], ["deals_actions.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_budget_spends",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("action_id", sa.String(length=36), nullable=False),
+        sa.Column("amount", MONEY, nullable=False),
+        sa.Column("currency", sa.String(length=3), nullable=False),
+        sa.Column("actor", sa.String(length=200), nullable=False),
+        sa.Column("external_ref", sa.String(length=300), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["action_id"], ["deals_actions.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_observations",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("experiment_id", sa.String(length=36), nullable=True),
+        sa.Column("action_id", sa.String(length=36), nullable=True),
+        sa.Column("idempotency_key", sa.String(length=200), nullable=False),
+        sa.Column("request_hash", sa.String(length=64), nullable=False),
+        sa.Column("observation_type", sa.String(length=80), nullable=False),
+        sa.Column("raw_text", sa.Text(), nullable=False),
+        sa.Column("structured_interpretation_json", sa.JSON(), nullable=False),
+        sa.Column("evidence_claim_id", sa.String(length=36), nullable=True),
+        sa.Column("external_ref", sa.String(length=300), nullable=True),
+        sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("impact_proposal_json", sa.JSON(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["action_id"], ["deals_actions.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["evidence_claim_id"], ["evidence_claims.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["experiment_id"], ["deals_experiments.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "deals_route_evidence_links",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("route_id", sa.String(length=36), nullable=False),
+        sa.Column("observation_id", sa.String(length=36), nullable=False),
+        sa.Column("inherited_from_route_id", sa.String(length=36), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["inherited_from_route_id"], ["deals_routes.id"], ondelete="RESTRICT"
+        ),
+        sa.ForeignKeyConstraint(["observation_id"], ["deals_observations.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["route_id"], ["deals_routes.id"], ondelete="RESTRICT"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("route_id", "observation_id"),
+    )
+    indexes = {
+        "deals_budget_adjustments": [
+            ("scope_type", False),
+            ("scope_id", False),
+            ("idempotency_key", True),
+        ],
+        "deals_workflow_jobs": [
+            ("idempotency_key", True),
+            ("job_type", False),
+            ("status", False),
+            ("available_at", False),
+            ("lease_token", False),
+            ("lease_expires_at", False),
+        ],
+        "deals_workflow_signals": [("job_id", False)],
+        "deals_cells": [
+            ("cell_key", True),
+            ("issuance_command_id", True),
+            ("hypothesis_id", False),
+            ("owner", False),
+            ("status", False),
+        ],
+        "deals_routes": [
+            ("cell_id", False),
+            ("source_route_candidate_id", False),
+            ("route_type", False),
+            ("stage", False),
+            ("lifecycle_status", False),
+            ("parent_route_id", False),
+            ("merged_into_route_id", False),
+        ],
+        "deals_experiments": [
+            ("route_id", False),
+            ("idempotency_key", True),
+            ("deadline", False),
+            ("status", False),
+        ],
+        "deals_route_lifecycle_events": [
+            ("route_id", False),
+            ("idempotency_key", True),
+            ("action", False),
+        ],
+        "deals_stage_transitions": [
+            ("route_id", False),
+            ("idempotency_key", True),
+            ("outcome", False),
+        ],
+        "deals_actions": [
+            ("experiment_id", False),
+            ("route_id", False),
+            ("idempotency_key", True),
+            ("action_type", False),
+            ("policy_decision_ref", False),
+            ("policy_status", False),
+            ("due_at", False),
+            ("status", False),
+        ],
+        "deals_experiment_outcomes": [
+            ("experiment_id", False),
+            ("idempotency_key", True),
+            ("outcome", False),
+        ],
+        "deals_action_attempts": [("action_id", False), ("status", False)],
+        "deals_budget_decisions": [
+            ("action_id", False),
+            ("idempotency_key", True),
+            ("decision", False),
+        ],
+        "deals_budget_reservations": [("action_id", True), ("status", False)],
+        "deals_budget_spends": [("action_id", True)],
+        "deals_observations": [
+            ("route_id", False),
+            ("experiment_id", False),
+            ("action_id", False),
+            ("idempotency_key", True),
+            ("observation_type", False),
+            ("evidence_claim_id", False),
+            ("external_ref", False),
+            ("occurred_at", False),
+        ],
+        "deals_route_evidence_links": [("route_id", False), ("observation_id", False)],
+    }
+    for table_name, definitions in indexes.items():
+        for column_name, unique in definitions:
+            op.create_index(
+                f"ix_{table_name}_{column_name}", table_name, [column_name], unique=unique
+            )
+
+
+def downgrade() -> None:
+    for table_name in (
+        "deals_route_evidence_links",
+        "deals_observations",
+        "deals_budget_spends",
+        "deals_budget_reservations",
+        "deals_budget_decisions",
+        "deals_action_attempts",
+        "deals_experiment_outcomes",
+        "deals_actions",
+        "deals_stage_transitions",
+        "deals_route_lifecycle_events",
+        "deals_experiments",
+        "deals_routes",
+        "deals_cells",
+        "deals_workflow_signals",
+        "deals_workflow_jobs",
+        "deals_budget_adjustments",
+    ):
+        op.drop_table(table_name)

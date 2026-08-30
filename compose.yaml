@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: tradefoundry
+      POSTGRES_USER: tradefoundry
+      POSTGRES_PASSWORD: tradefoundry
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradefoundry"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - tradefoundry-db:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      TRADEFOUNDRY_DATABASE_URL: postgresql+psycopg://tradefoundry:tradefoundry@db:5432/tradefoundry
+      TRADEFOUNDRY_ARTIFACT_ROOT: /data/artifacts
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - tradefoundry-artifacts:/data/artifacts
+
+  worker:
+    build: .
+    command: ["python", "-m", "tradefoundry", "worker", "--poll-seconds", "30"]
+    environment:
+      TRADEFOUNDRY_DATABASE_URL: postgresql+psycopg://tradefoundry:tradefoundry@db:5432/tradefoundry
+      TRADEFOUNDRY_ARTIFACT_ROOT: /data/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - tradefoundry-artifacts:/data/artifacts
+
+volumes:
+  tradefoundry-db:
+  tradefoundry-artifacts:

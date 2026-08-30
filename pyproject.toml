@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tradefoundry"
+version = "0.1.0"
+description = "Evidence-first trade opportunity operating system"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "alembic>=1.14,<2",
+  "beautifulsoup4>=4.12,<5",
+  "croniter>=6,<7",
+  "fastapi>=0.115,<1",
+  "httpx>=0.28,<1",
+  "jsonschema>=4.23,<5",
+  "numpy>=2,<3",
+  "pint>=0.24,<1",
+  "phonenumbers>=9,<10",
+  "py-moneyed>=3,<4",
+  "python-stdnum>=2,<3",
+  "rapidfuzz>=3.14,<4",
+  "pydantic-settings>=2.7,<3",
+  "psycopg[binary]>=3.2,<4",
+  "python-dateutil>=2.9,<3",
+  "scipy>=1.15,<2",
+  "sqlalchemy>=2.0,<3",
+  "tenacity>=9,<10",
+  "typer>=0.15,<1",
+  "uvicorn[standard]>=0.34,<1",
+]
+
+[project.optional-dependencies]
+documents = [
+  "docling>=2.60,<3",
+]
+resolution = [
+  "splink>=4,<5",
+]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+]
+
+[project.scripts]
+tradefoundry = "tradefoundry.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tradefoundry"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/tradefoundry/api.py" = ["B008"]
+"src/tradefoundry/evidence/api.py" = ["B008"]
+"src/tradefoundry/deals/api.py" = ["B008"]
+"src/tradefoundry/master/api.py" = ["B008"]
+"src/tradefoundry/opportunity/api.py" = ["B008"]
+"src/tradefoundry/tradealpha/api.py" = ["B008"]
+"alembic/versions/*.py" = ["E501"]

@@ -1,0 +1,1 @@
+"""Evidence-bounded opportunity compilation."""
