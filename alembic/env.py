@@ -9,6 +9,7 @@ from tradefoundry.controltower import models as controltower_models  # noqa: F40
 from tradefoundry.db import Base
 from tradefoundry.deals import models as deal_models  # noqa: F401
 from tradefoundry.evidence import models as evidence_models  # noqa: F401
+from tradefoundry.execution import models as execution_models  # noqa: F401
 from tradefoundry.ingestion import models  # noqa: F401
 from tradefoundry.master import models as master_models  # noqa: F401
 from tradefoundry.opportunity import models as opportunity_models  # noqa: F401

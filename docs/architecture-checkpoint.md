@@ -30,7 +30,7 @@ SourceRecord
 | 6 | TradeAlpha and portfolio | completed | temporal scores, distributions, valuations and constrained allocations |
 | 7 | Bilateral commercial execution | completed | governed RFQs, quotes, interactions, qualification and terms |
 | 8 | Financial risk, compliance and approvals | completed | costs, compliance decisions, approvals, freezes and tokens |
-| 9 | Orders, cash and learning | next | execution ledger and Outcomes |
+| 9 | Orders, cash and learning | completed | authorized ERP mappings/orders, reconciled cash/P&L, Outcomes and governed learning |
 
 ## Non-negotiable invariants
 
@@ -54,6 +54,12 @@ SourceRecord
     bypass a current freeze or turn a candidate compliance result into legal advice.
 15. Approval and token consumption authorize one exact external action; board nine alone records the
     resulting order, fulfillment, invoice, payment, realized P&L and learning Outcome.
+16. ERPNext remains the operational order, inventory and accounting ledger. TradeFoundry stores
+    mappings, authorized commands, reconciliation snapshots and analytical facts, not a second GL.
+17. `COLLECTED` requires fully allocated sales invoices and bank/ERP-reconciled payments; a promise,
+    provider callback or CRM stage is insufficient.
+18. Prediction inputs and learning features must predate their cutoffs. Challenger eligibility opens
+    human review and can never auto-promote a model or mutate policy, templates or ontology.
 
 ## Board-seven handoff boundary
 
@@ -86,6 +92,21 @@ the provider/ERP idempotency key and reconcile ambiguous success rather than iss
 Estimated financial scenarios remain linked forecasts; invoices, payments, fees, FX differences,
 claims and realized contribution P&L become board-nine facts. Only reconciled Outcomes may feed
 TradeAlpha learning.
+
+## Board-nine completion boundary
+
+Board nine consumes verified commitments, DealRoutes, Board 8 decisions/approvals/tokens, ERP/bank
+facts, evidence Claims and immutable TradeAlpha snapshots. It owns provider mappings/outbox attempts,
+authorized order commands, ERP reconciliation snapshots, fulfillment/document facts, invoice/payment
+allocations, bank reconciliation, quality cases, realized contribution P&L, Outcomes,
+prediction/actual comparisons, learning datasets/evaluations, review proposals and fixed KPI
+snapshots. It never copies the ERP general ledger, invents a bank reconciliation, changes route stage
+directly, rewrites an earlier forecast or promotes a challenger automatically.
+
+The nine-board local/MVP architecture is now functionally closed. Further work is deployment and
+product hardening: live ERP/bank adapters, signed webhooks, PostgreSQL concurrency/backup exercises,
+observability, accounting/legal ownership and governed model operations. Those gates must not be
+represented as completed merely because the deterministic local contracts pass.
 
 ## Start-of-board review
 

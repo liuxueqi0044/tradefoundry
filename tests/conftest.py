@@ -14,6 +14,7 @@ from tradefoundry.evidence.contracts import ExtractionSchemaCreate
 from tradefoundry.evidence.conversion import ConversionService, StructuredTextConverter
 from tradefoundry.evidence.intake import FileIntakeService
 from tradefoundry.evidence.schemas import ExtractionSchemaRegistry
+from tradefoundry.execution import models as execution_models  # noqa: F401
 from tradefoundry.ingestion import models  # noqa: F401
 from tradefoundry.ingestion.artifacts import FileSystemArtifactStore
 from tradefoundry.ingestion.contracts import SourceCreate, SourceKind

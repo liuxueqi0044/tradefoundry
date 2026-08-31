@@ -1,7 +1,7 @@
 # TradeFoundry
 
 TradeFoundry is an evidence-first operating system for discovering and executing global trade
-opportunities. The repository currently contains eight completed modular-monolith boards:
+opportunities. The repository currently contains all nine completed local/MVP modular-monolith boards:
 
 1. **Global sensors and source governance**
 2. **Evidence vault and document intelligence**
@@ -11,6 +11,7 @@ opportunities. The repository currently contains eight completed modular-monolit
 6. **TradeAlpha and portfolio decision support**
 7. **Governed buyer/supplier bilateral execution**
 8. **Financial risk, compliance and approval control tower**
+9. **Authorized execution, settlement and governed learning closure**
 
 ## Implemented scope
 
@@ -56,6 +57,12 @@ opportunities. The repository currently contains eight completed modular-monolit
 | S8.9–S8.11 | Effective-dated export/trade candidates and unified communication privacy decisions | `controltower/trade_rules.py`, `privacy.py` |
 | S8.12–S8.14 | Versioned default-deny policy, ordered approvals and bound single-use execution tokens | `controltower/policy.py`, `governance.py` |
 | S8.15–S8.16 | Risk cases, independent evidence-backed freeze release and role-redacted audit export | `controltower/governance.py`, `audit.py` |
+| S9.1–S9.3 | ERPNext mappings/outbox, Board-8-token-bound orders and immutable ERP reconciliation snapshots | `execution/erp.py`, `orders.py` |
+| S9.4–S9.5 | Evidence-backed fulfillment milestones and version-consistent redacted shipment documents | `execution/fulfillment.py`, `documents.py` |
+| S9.6–S9.7 | Invoice/receivable/payable facts, currency-safe allocations, immutable bank reconciliation and collection signals | `execution/settlement.py` |
+| S9.8–S9.9 | Independently reviewed quality cases and ERP-reconciled realized contribution P&L | `execution/quality.py`, `pnl.py` |
+| S9.10–S9.12 | Fact-derived Outcomes, pinned prediction errors and cutoff-safe failure-inclusive learning datasets | `execution/learning.py` |
+| S9.13–S9.15 | Out-of-time challenger evaluation, review-only change proposals and fixed-definition KPI snapshots | `execution/evaluation.py`, `reviews.py`, `dashboard.py` |
 
 ## Quick start
 
@@ -117,9 +124,9 @@ uv run pytest
 ```
 
 Tests are organized by the S1.1–S1.9, S2.1–S2.10, S3.1–S3.9, S4.1–S4.9,
-S5.1–S5.11, S6.1–S6.13, S7.1–S7.18 and S8.1–S8.16 acceptance identifiers. They use deterministic
+S5.1–S5.11, S6.1–S6.13, S7.1–S7.18, S8.1–S8.16 and S9.1–S9.15 acceptance identifiers. They use deterministic
 fixtures, mock HTTP transports, an in-memory outbound gateway and contract-level model fixtures; no
-live website, buyer, supplier, communication channel, financial service or external model is
+live website, buyer, supplier, communication channel, financial service, ERP, bank or external model is
 contacted during validation.
 
 ## Boundary with later boards
@@ -133,8 +140,11 @@ observations and budget ledgers. Board six adds append-only shadow scores, distr
 and constrained portfolio recommendations. Board seven prepares and records governed bilateral
 commercial artifacts, but defaults to no live outbound delivery. Board eight provides deterministic
 cost/cash scenarios and the sole current policy, compliance freeze, approval and production-token
-authority. Its assessments are not legal advice and its scenarios are not accounting truth. Orders,
-shipments, invoices, payments, realized P&L and learning Outcomes remain board nine.
+authority. Its assessments are not legal advice and its scenarios are not accounting truth. Board
+nine maps approved commitments to ERP-native order intents, reconciles invoices/payments without
+copying the ERP general ledger, derives realized P&L and Outcomes, and builds cutoff-safe governed
+learning records. A local passing test does not configure a live ERP/bank integration or authorize
+automatic model promotion.
 
 Before starting another board, review the short [architecture checkpoint](docs/architecture-checkpoint.md).
 See [ADR-0001](docs/adr/0001-ingestion-architecture.md),
@@ -144,5 +154,6 @@ See [ADR-0001](docs/adr/0001-ingestion-architecture.md),
 [ADR-0005](docs/adr/0005-deal-execution-kernel.md),
 [ADR-0006](docs/adr/0006-tradealpha-decision-engine.md),
 [ADR-0007](docs/adr/0007-governed-bilateral-execution.md),
-[ADR-0008](docs/adr/0008-finance-compliance-control-tower.md), and the board eight
-[operations runbook](docs/runbooks/board-8-operations.md).
+[ADR-0008](docs/adr/0008-finance-compliance-control-tower.md),
+[ADR-0009](docs/adr/0009-execution-settlement-learning-closure.md), and the board nine
+[operations runbook](docs/runbooks/board-9-operations.md).

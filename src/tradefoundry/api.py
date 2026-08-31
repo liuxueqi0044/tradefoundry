@@ -10,6 +10,7 @@ from tradefoundry.controltower.api import router as controltower_router
 from tradefoundry.db import get_session
 from tradefoundry.deals.api import router as deals_router
 from tradefoundry.evidence.api import router as evidence_router
+from tradefoundry.execution.api import router as execution_router
 from tradefoundry.ingestion.artifacts import FileSystemArtifactStore
 from tradefoundry.ingestion.contracts import (
     FetchRunCreate,
@@ -47,6 +48,7 @@ app.include_router(deals_router)
 app.include_router(tradealpha_router)
 app.include_router(bilateral_router)
 app.include_router(controltower_router)
+app.include_router(execution_router)
 
 
 def _artifact_store() -> FileSystemArtifactStore:
