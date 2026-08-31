@@ -246,8 +246,15 @@ class SendTokenView(BaseModel):
 
 class SendCommand(BaseModel):
     idempotency_key: str = Field(min_length=3, max_length=200)
-    token: str = Field(min_length=20)
+    token: str | None = Field(default=None, min_length=20)
+    control_token: str | None = Field(default=None, min_length=20)
     actor: str = Field(min_length=1, max_length=200)
+
+    @model_validator(mode="after")
+    def exactly_one_token(self):
+        if bool(self.token) == bool(self.control_token):
+            raise ValueError("provide exactly one local token or Board 8 control token")
+        return self
 
 
 class RfqAuthorizationRequest(BaseModel):
@@ -265,7 +272,8 @@ class OutboundMessageView(OrmView):
     resource_id: str
     resource_version: int
     recipient_ref: str
-    token_id: str
+    token_id: str | None
+    control_token_id: str | None
     gateway_name: str
     external_message_id: str
     receipt_json: dict[str, Any]

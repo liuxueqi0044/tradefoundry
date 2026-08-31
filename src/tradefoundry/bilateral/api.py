@@ -66,11 +66,9 @@ from tradefoundry.bilateral.messaging import (
 from tradefoundry.bilateral.outbound import OutboundAuthorizationService, OutboundSendService
 from tradefoundry.bilateral.ports import (
     CostScenarioPort,
-    DenyAllPolicyPort,
     DisabledOutboundGateway,
     OutboundGateway,
     PolicyDecisionPort,
-    UnavailableCostScenarioPort,
 )
 from tradefoundry.bilateral.quotes import QuoteComparisonService, SupplierQuoteService
 from tradefoundry.bilateral.rfq import RfqService
@@ -79,21 +77,26 @@ from tradefoundry.bilateral.suppliers import (
     SupplierMasterService,
     SupplierPerformanceService,
 )
+from tradefoundry.controltower.adapters import (
+    Board7CostScenarioAdapter,
+    Board7ExecutionGuard,
+    Board7PolicyAdapter,
+)
 from tradefoundry.db import get_session
 
 router = APIRouter(prefix="/v1/bilateral", tags=["bilateral"])
 
 
-def get_bilateral_policy() -> PolicyDecisionPort:
-    return DenyAllPolicyPort()
+def get_bilateral_policy(session: Session = Depends(get_session)) -> PolicyDecisionPort:
+    return Board7PolicyAdapter(session)
 
 
 def get_outbound_gateway() -> OutboundGateway:
     return DisabledOutboundGateway()
 
 
-def get_cost_scenarios() -> CostScenarioPort:
-    return UnavailableCostScenarioPort()
+def get_cost_scenarios(session: Session = Depends(get_session)) -> CostScenarioPort:
+    return Board7CostScenarioAdapter(session)
 
 
 def _http_error(exc: Exception) -> HTTPException:
@@ -185,7 +188,9 @@ def send_outbound(
     gateway: OutboundGateway = Depends(get_outbound_gateway),
 ):
     try:
-        return OutboundSendService(session, gateway).send(request)
+        return OutboundSendService(
+            session, gateway, execution_guard=Board7ExecutionGuard(session)
+        ).send(request)
     except Exception as exc:
         raise _http_error(exc) from exc
 
@@ -273,7 +278,7 @@ def suppress_contact(
     contact_id: str, request: SuppressionCreate, session: Session = Depends(get_session)
 ):
     try:
-        return CommunicationEligibilityService(session, DenyAllPolicyPort()).suppress(
+        return CommunicationEligibilityService(session, Board7PolicyAdapter(session)).suppress(
             contact_id, request
         )
     except Exception as exc:

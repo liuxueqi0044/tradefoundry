@@ -69,6 +69,28 @@ class OutboundReceipt:
     details: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class ExecutionBinding:
+    token_id: str
+    action_kind: str
+    resource_type: str
+    resource_id: str
+    recipient_ref: str
+    payload_hash: str
+    resource_version: int
+    params: dict[str, Any]
+
+
+class ExecutionGuardPort(Protocol):
+    def inspect(self, raw_token: str) -> ExecutionBinding: ...
+
+    def reserve(
+        self, raw_token: str, binding: ExecutionBinding, payload: OutboundPayload, effect_key: str
+    ) -> None: ...
+
+    def consume(self, raw_token: str, effect_key: str, execution_reference: str) -> None: ...
+
+
 class OutboundGateway(Protocol):
     name: str
 

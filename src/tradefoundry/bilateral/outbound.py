@@ -27,7 +27,12 @@ from tradefoundry.bilateral.models import (
     SupplierCandidateRow,
     SuppressionRow,
 )
-from tradefoundry.bilateral.ports import OutboundGateway, OutboundPayload, PolicyDecisionPort
+from tradefoundry.bilateral.ports import (
+    ExecutionGuardPort,
+    OutboundGateway,
+    OutboundPayload,
+    PolicyDecisionPort,
+)
 from tradefoundry.ingestion.hashing import payload_hash
 from tradefoundry.ingestion.models import utcnow
 
@@ -130,20 +135,35 @@ class OutboundAuthorizationService:
 
 
 class OutboundSendService:
-    def __init__(self, session: Session, gateway: OutboundGateway):
+    def __init__(
+        self,
+        session: Session,
+        gateway: OutboundGateway,
+        execution_guard: ExecutionGuardPort | None = None,
+    ):
         self.session = session
         self.gateway = gateway
+        self.execution_guard = execution_guard
 
     def send(self, request: SendCommand) -> OutboundMessageRow:
-        token_hash = payload_hash(request.token)
+        credential = request.control_token or request.token
+        credential_hash = payload_hash(credential)
         request_hash = request_fingerprint(
-            {"operation": "outbound.send", "token_hash": token_hash}, request
+            {"operation": "outbound.send", "credential_hash": credential_hash}, request
         )
         existing = idempotent_row(
             self.session, OutboundMessageRow, request.idempotency_key, request_hash
         )
         if existing is not None:
             return existing
+        if request.control_token is not None:
+            return self._send_with_control_token(request, request_hash)
+        return self._send_with_local_token(request, request_hash)
+
+    def _send_with_local_token(self, request: SendCommand, request_hash: str) -> OutboundMessageRow:
+        if request.token is None:
+            raise ValueError("local send token is required")
+        token_hash = payload_hash(request.token)
         token = self.session.scalar(
             select(SendTokenRow).where(SendTokenRow.token_hash == token_hash)
         )
@@ -167,6 +187,7 @@ class OutboundSendService:
             resource_version=payload.resource_version,
             recipient_ref=payload.recipient_ref,
             token_id=token.id,
+            control_token_id=None,
             gateway_name=receipt.gateway_name,
             external_message_id=receipt.external_message_id,
             receipt_json=receipt.details,
@@ -177,6 +198,42 @@ class OutboundSendService:
         token.consumed_at = utcnow()
         self.session.add(row)
         self.session.commit()
+        return row
+
+    def _send_with_control_token(
+        self, request: SendCommand, request_hash: str
+    ) -> OutboundMessageRow:
+        if request.control_token is None:
+            raise ValueError("Board 8 control token is required")
+        if self.execution_guard is None:
+            raise ValueError("Board 8 execution guard is not connected")
+        binding = self.execution_guard.inspect(request.control_token)
+        expected_actor = binding.params.get("actor")
+        if expected_actor is not None and expected_actor != request.actor:
+            raise ValueError("control token is bound to a different execution actor")
+        payload = self._payload(binding)
+        effect_key = f"bilateral-send:control:{binding.token_id}"
+        self.execution_guard.reserve(request.control_token, binding, payload, effect_key)
+        receipt = self.gateway.send(payload, effect_key=effect_key)
+        row = OutboundMessageRow(
+            id=new_id(),
+            idempotency_key=request.idempotency_key,
+            request_hash=request_hash,
+            action_kind=payload.action_kind,
+            resource_id=payload.resource_id,
+            resource_version=payload.resource_version,
+            recipient_ref=payload.recipient_ref,
+            token_id=None,
+            control_token_id=binding.token_id,
+            gateway_name=receipt.gateway_name,
+            external_message_id=receipt.external_message_id,
+            receipt_json=receipt.details,
+            payload_hash=payload.payload_hash,
+            status=receipt.status,
+            sent_by=request.actor,
+        )
+        self.session.add(row)
+        self.execution_guard.consume(request.control_token, effect_key, receipt.external_message_id)
         return row
 
     def _payload(self, token: SendTokenRow) -> OutboundPayload:

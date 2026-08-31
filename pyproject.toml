@@ -40,6 +40,7 @@ resolution = [
   "splink>=4,<5",
 ]
 dev = [
+  "hypothesis>=6,<7",
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",
   "ruff>=0.9,<1",
@@ -70,4 +71,5 @@ select = ["E", "F", "I", "B", "UP"]
 "src/tradefoundry/opportunity/api.py" = ["B008"]
 "src/tradefoundry/tradealpha/api.py" = ["B008"]
 "src/tradefoundry/bilateral/api.py" = ["B008"]
+"src/tradefoundry/controltower/api.py" = ["B008"]
 "alembic/versions/*.py" = ["E501"]

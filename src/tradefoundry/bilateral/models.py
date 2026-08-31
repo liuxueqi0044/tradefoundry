@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     DateTime,
     Float,
     ForeignKey,
@@ -161,6 +162,13 @@ class SendTokenRow(Base):
 
 class OutboundMessageRow(Base):
     __tablename__ = "bilateral_outbound_messages"
+    __table_args__ = (
+        CheckConstraint(
+            "(token_id IS NOT NULL AND control_token_id IS NULL) OR "
+            "(token_id IS NULL AND control_token_id IS NOT NULL)",
+            name="ck_bilateral_outbound_messages_exactly_one_token",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     idempotency_key: Mapped[str] = mapped_column(String(200), unique=True, index=True)
@@ -169,8 +177,13 @@ class OutboundMessageRow(Base):
     resource_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     resource_version: Mapped[int] = mapped_column(Integer, nullable=False)
     recipient_ref: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    token_id: Mapped[str] = mapped_column(
-        ForeignKey("bilateral_send_tokens.id", ondelete="RESTRICT"), unique=True
+    token_id: Mapped[str | None] = mapped_column(
+        ForeignKey("bilateral_send_tokens.id", ondelete="RESTRICT"), unique=True, nullable=True
+    )
+    control_token_id: Mapped[str | None] = mapped_column(
+        ForeignKey("risk_execution_tokens.id", ondelete="RESTRICT"),
+        unique=True,
+        nullable=True,
     )
     gateway_name: Mapped[str] = mapped_column(String(80), nullable=False)
     external_message_id: Mapped[str] = mapped_column(String(300), nullable=False, unique=True)

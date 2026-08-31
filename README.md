@@ -1,7 +1,7 @@
 # TradeFoundry
 
 TradeFoundry is an evidence-first operating system for discovering and executing global trade
-opportunities. The repository currently contains seven completed modular-monolith boards:
+opportunities. The repository currently contains eight completed modular-monolith boards:
 
 1. **Global sensors and source governance**
 2. **Evidence vault and document intelligence**
@@ -10,6 +10,7 @@ opportunities. The repository currently contains seven completed modular-monolit
 5. **Deal Cell and route experiments**
 6. **TradeAlpha and portfolio decision support**
 7. **Governed buyer/supplier bilateral execution**
+8. **Financial risk, compliance and approval control tower**
 
 ## Implemented scope
 
@@ -49,6 +50,12 @@ opportunities. The repository currently contains seven completed modular-monolit
 | S7.8–S7.11 | Evidence-backed buyer/contact CRM, suppression-first eligibility, grounded drafts and first-contact approval | `bilateral/crm.py`, `messaging.py`, `outbound.py` |
 | S7.12–S7.14 | Raw-preserving interaction intake, conservative thread linking, intent review and six-part qualification | `bilateral/messaging.py` |
 | S7.15–S7.18 | Bilateral constraint matrix, Board-8 cost seam, immutable negotiation terms and meeting action proposals | `bilateral/coordination.py` |
+| S8.1–S8.3 | Decimal Money/FX, versioned cost definitions and deterministic landed-cost scenarios | `controltower/finance.py` |
+| S8.4–S8.6 | Dated cashflow/working capital, sensitivity and conservative credit assessment | `controltower/finance.py` |
+| S8.7–S8.8 | Immutable compliance dataset versions, explained screening, ownership propagation and automatic freezes | `controltower/datasets.py`, `screening.py` |
+| S8.9–S8.11 | Effective-dated export/trade candidates and unified communication privacy decisions | `controltower/trade_rules.py`, `privacy.py` |
+| S8.12–S8.14 | Versioned default-deny policy, ordered approvals and bound single-use execution tokens | `controltower/policy.py`, `governance.py` |
+| S8.15–S8.16 | Risk cases, independent evidence-backed freeze release and role-redacted audit export | `controltower/governance.py`, `audit.py` |
 
 ## Quick start
 
@@ -110,7 +117,7 @@ uv run pytest
 ```
 
 Tests are organized by the S1.1–S1.9, S2.1–S2.10, S3.1–S3.9, S4.1–S4.9,
-S5.1–S5.11, S6.1–S6.13 and S7.1–S7.18 acceptance identifiers. They use deterministic
+S5.1–S5.11, S6.1–S6.13, S7.1–S7.18 and S8.1–S8.16 acceptance identifiers. They use deterministic
 fixtures, mock HTTP transports, an in-memory outbound gateway and contract-level model fixtures; no
 live website, buyer, supplier, communication channel, financial service or external model is
 contacted during validation.
@@ -124,9 +131,10 @@ Board four compiles verified events into audited hypotheses and versioned Deal C
 commands. Board five turns only a passing command into durable Deal Cell/Route experiments, actions,
 observations and budget ledgers. Board six adds append-only shadow scores, distributions, valuations
 and constrained portfolio recommendations. Board seven prepares and records governed bilateral
-commercial artifacts, but defaults to no live outbound delivery. Deterministic landed cost, current
-policy authority, compliance freezes and production execution tokens remain board eight; orders,
-cash and accounting truth remain board nine.
+commercial artifacts, but defaults to no live outbound delivery. Board eight provides deterministic
+cost/cash scenarios and the sole current policy, compliance freeze, approval and production-token
+authority. Its assessments are not legal advice and its scenarios are not accounting truth. Orders,
+shipments, invoices, payments, realized P&L and learning Outcomes remain board nine.
 
 Before starting another board, review the short [architecture checkpoint](docs/architecture-checkpoint.md).
 See [ADR-0001](docs/adr/0001-ingestion-architecture.md),
@@ -135,5 +143,6 @@ See [ADR-0001](docs/adr/0001-ingestion-architecture.md),
 [ADR-0004](docs/adr/0004-opportunity-compiler.md),
 [ADR-0005](docs/adr/0005-deal-execution-kernel.md),
 [ADR-0006](docs/adr/0006-tradealpha-decision-engine.md),
-[ADR-0007](docs/adr/0007-governed-bilateral-execution.md), and the board seven
-[operations runbook](docs/runbooks/board-7-operations.md).
+[ADR-0007](docs/adr/0007-governed-bilateral-execution.md),
+[ADR-0008](docs/adr/0008-finance-compliance-control-tower.md), and the board eight
+[operations runbook](docs/runbooks/board-8-operations.md).

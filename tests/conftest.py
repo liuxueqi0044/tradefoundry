@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from tradefoundry.bilateral import models as bilateral_models  # noqa: F401
+from tradefoundry.controltower import models as controltower_models  # noqa: F401
 from tradefoundry.db import Base
 from tradefoundry.deals import models as deal_models  # noqa: F401
 from tradefoundry.evidence import models as evidence_models  # noqa: F401

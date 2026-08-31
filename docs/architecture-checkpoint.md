@@ -14,6 +14,7 @@ SourceRecord
   -> DealCell -> DealRoute -> Experiment -> Action -> Observation
   -> ScoreSnapshot / BudgetAllocation / PolicyDecision
   -> RFQ / Quote / Interaction / NegotiationTerm
+  -> CostScenario / ComplianceAssessment / Approval / ExecutionToken
   -> Order / Shipment / Invoice / Payment / Outcome
 ```
 
@@ -28,8 +29,8 @@ SourceRecord
 | 5 | Deal Cell and route experiments | completed | durable deal/route state, experiments, actions, observations and budget ledger |
 | 6 | TradeAlpha and portfolio | completed | temporal scores, distributions, valuations and constrained allocations |
 | 7 | Bilateral commercial execution | completed | governed RFQs, quotes, interactions, qualification and terms |
-| 8 | Financial risk, compliance and approvals | next | costs, policy decisions and approvals |
-| 9 | Orders, cash and learning | pending | execution ledger and Outcomes |
+| 8 | Financial risk, compliance and approvals | completed | costs, compliance decisions, approvals, freezes and tokens |
+| 9 | Orders, cash and learning | next | execution ledger and Outcomes |
 
 ## Non-negotiable invariants
 
@@ -49,6 +50,10 @@ SourceRecord
     score, small data keeps wide intervals, and no Outcome means a rule baseline rather than learning.
 13. Board-seven commercial records are facts or drafts, never policy authority. Live outbound is
     disabled until board eight supplies current policy, approval, freeze checks and production tokens.
+14. Board eight is the sole control authority. No score, workflow or ERP adapter may copy its rules,
+    bypass a current freeze or turn a candidate compliance result into legal advice.
+15. Approval and token consumption authorize one exact external action; board nine alone records the
+    resulting order, fulfillment, invoice, payment, realized P&L and learning Outcome.
 
 ## Board-seven handoff boundary
 
@@ -64,6 +69,23 @@ execution-token and freeze authority behind the existing ports. Board seven's de
 communication and reject buyer-quote construction; its default gateway cannot deliver live messages.
 The local token and recording gateway are acceptance scaffolding, not production authorization.
 Board nine remains the authority for orders, payments, P&L and learning Outcomes.
+
+## Board-eight handoff boundary
+
+Board eight consumes canonical Entity/Product references, evidence Claims, Deal Route context and
+board-seven contact/quote/term facts. It owns versioned Money/FX conversions, cost and cash scenarios,
+credit assessments, compliance datasets and candidate assessments, policy bundles/decisions,
+communication decisions, approval chains, execution tokens, cases, freezes/releases and audit
+exports. It never copies canonical identity, ranks opportunities, edits commercial terms, makes an
+unreviewed legal conclusion or posts an order/accounting entry.
+
+Board nine must map approved TradeFoundry facts to ERPNext idempotently. Every commitment-creating
+command must pin its board-eight policy decision, approval request, execution token, parameter hash
+and relevant subjects. It must recheck the token/freeze boundary around the external effect, retain
+the provider/ERP idempotency key and reconcile ambiguous success rather than issuing a duplicate.
+Estimated financial scenarios remain linked forecasts; invoices, payments, fees, FX differences,
+claims and realized contribution P&L become board-nine facts. Only reconciled Outcomes may feed
+TradeAlpha learning.
 
 ## Start-of-board review
 
